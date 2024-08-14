@@ -1,0 +1,15 @@
+names:
+- insect
+- locust
+- moth
+- skeeter
+nc: 4
+roboflow:
+  license: CC BY 4.0
+  project: insect-detection-psm58
+  url: https://universe.roboflow.com/insecdiscern/insect-detection-psm58/dataset/1
+  version: 1
+  workspace: insecdiscern
+test: ../test/images
+train: ../train/images
+val: ../valid/images
