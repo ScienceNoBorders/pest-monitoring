@@ -9,6 +9,10 @@ __pycache__
 
 insect-yolo-7-23
 insect-detection
+venv
+new_tailor.png
+tailor_image.png
+yolov8s.pt
 
 target/
 !.mvn/wrapper/maven-wrapper.jar
