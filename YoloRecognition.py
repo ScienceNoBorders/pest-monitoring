@@ -1,3 +1,6 @@
+import os
+from datetime import time
+
 import cv2
 from ultralytics import YOLO
 
@@ -120,21 +123,27 @@ def crop_circle_and_square(image_path, output_path):
 
 @app.route('/predictImage/<param>')
 def predictImage(path):
-    result = {"code": 200}
+    start_time = time.time()
+    result = {"code": 200, "msg": '扫描成功！'}
     names = ['草蛉科', '九香虫', '小飞虫', '甲虫', '昆虫', '蝗虫', '飞蛾', '蚊子']
     # 设置字体，这里需要你有中文字体文件，如果没有则需要下载或使用支持中文的字体
     font = ImageFont.truetype("Arial Unicode.ttf", 18)
     pairs_tuple = ()
     insect_detail = []
-    output_image_path = 'pic/predict1.png'
+    file_name = os.path.basename(path)
+    output_path = 'pic/'
+    full_path = os.path.join(output_path, file_name)
     try:
-        output_path = 'tailor_image.png'
+        # 检查并创建目录
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        tailor_output_path = 'tailor_image.png'
 
         # (3000, 3000)裁剪尺寸
-        make_circle(path, output_path)
+        make_circle(path, tailor_output_path)
         # crop_to_circle(path, output_path, 3000)
         print("开始识别！")
-        image = cv2.imread(output_path)
+        image = cv2.imread(tailor_output_path)
         # 进行预测
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
@@ -161,7 +170,7 @@ def predictImage(path):
                           cv2.FILLED)
             # 绘制标签文本
             # cv2.putText(image_rgb, label, (x1, top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-            pair = (f'{names[int(cls)]}: {conf:.2f}', (x1, top-17), names[int(cls)], int(cls), conf)
+            pair = (f'{names[int(cls)]}: {conf:.2f}', (x1, top-17))
             pairs_tuple += (pair,)
             insect_detail.append({
                 'name_en': model.names[int(cls)],
@@ -183,15 +192,16 @@ def predictImage(path):
         image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
         image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        cv2.imwrite(output_image_path, image_bgr)
+        cv2.imwrite(full_path, image_bgr)
     except Exception as ex:
-        result['msg'] = ex
-
-    result['msg'] = '扫描成功！'
+        result['msg'] = str(ex)
+        result['code'] = 405
+    end_time = time.time()
     result['data'] = {
         'insectNumber': len(pairs_tuple),
-        'indentifyPicUrl': output_image_path,
+        'indentifyPicUrl': str(full_path),
         'insectDetail': insect_detail,
+        'taskTime': f"{end_time-start_time: 0.2f}"
     }
     insectJson = json.dumps(result, ensure_ascii=False)
     return jsonify(json.loads(insectJson))
